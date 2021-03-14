@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Rendering;
+using System;
 
 namespace RodRenderer
 {
@@ -6,7 +7,7 @@ namespace RodRenderer
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            Raster render = new Raster(1024, 512);
         }
     }
 }
