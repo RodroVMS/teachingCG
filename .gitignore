@@ -299,3 +299,17 @@ FakesAssemblies/
 *.exe
 *.out
 *.app
+.vscode/launch.json
+.vscode/tasks.json
+C#/.vscode/launch.json
+C#/.vscode/tasks.json
+C#/Renderer/test.rbm
+C#/Renderer/.vscode/launch.json
+C#/Renderer/.vscode/tasks.json
+C#/RodRenderer/global.json
+C#/RodRenderer/.vscode/launch.json
+C#/RodRenderer/.vscode/tasks.json
+ImageViewer/test.rbm
+ImageViewer/Python/test.rbm
+ImageViewer/Python/aa/test.rbm
+C#/RodRenderer/Display/Plane.cs
