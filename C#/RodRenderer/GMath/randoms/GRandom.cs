@@ -18,6 +18,11 @@ namespace GMath
             rnd = new Random();
         }
 
+        public float randomlimit(float min, float max)
+        {
+            return random() * (max - min) + min;
+        }
+
         public float random()
         {
             return (float)rnd.NextDouble();
@@ -25,10 +30,10 @@ namespace GMath
 
         #region Uniform Distributions
 
-        public float random(float min, float max)
-        {
-            return random() * (max - min) + min;
-        }
+        //public float random(float min, float max)
+        //{
+        //    return random() * (max - min) + min;
+        //}
 
         public float2 random2()
         {
