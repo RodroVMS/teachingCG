@@ -1,6 +1,6 @@
-using GMath;
 using System;
 using System.Collections.Generic;
+using GMath;
 using static GMath.Gfx;
 
 namespace Utils
@@ -10,7 +10,7 @@ namespace Utils
         private delegate float3 figure_function();
         private static figure_function SelectFigure(string figure)
         {
-            switch(figure)
+            switch (figure)
             {
                 case "Box": return randomInBox;
                 case "Cylinder": return randomInCylinder;
@@ -25,22 +25,23 @@ namespace Utils
             }
             throw new Exception("" + figure + " is not a valid figure.");
         }
-         public static float3[] RandomPointsInSurface(int N, string figure)
-         {
-             figure_function randomPoints = SelectFigure(figure);
-             float3[] points = new float3[N];
-             for (int i = 0; i < N; i++)
+        public static float3[] RandomPointsInSurface(int N, string figure)
+        {
+            figure_function randomPoints = SelectFigure(figure);
+            float3[] points = new float3[N];
+            for (int i = 0; i < N; i++)
                 points[i] = randomPoints();
 
             return points;
-         }
+        }
 
-        public static float3[] Intersect(float3[] points, Func<float3,bool> fxyz)
+        public static float3[] Intersect(float3[] points, Func<float3, bool> fxyz)
         {
             var intersectPoints = new List<float3>();
-            for (int i = 0;  i < points.Length; i++){
+            for (int i = 0; i < points.Length; i++)
+            {
                 float3 point = points[i];
-                if(fxyz(point))
+                if (fxyz(point))
                     intersectPoints.Add(point);
             }
             return intersectPoints.ToArray();
@@ -67,7 +68,7 @@ namespace Utils
             for (int i = 0; i < points.Length; i++)
                 result[i] = freeTransform(points[i]);
 
-            return result;  
+            return result;
         }
 
         public static float3[] JoinPoints(params float3[][] points)
@@ -77,18 +78,19 @@ namespace Utils
             {
                 total_length += points[i].Length;
             }
-            
+
             int index = 0;
             float3[] joinPoints = new float3[total_length];
             for (int i = 0; i < points.Length; i++)
             {
-                copy(joinPoints, points[i], index);
+                copy<float3>(joinPoints, points[i], index);
                 index += points[i].Length;
             }
             return joinPoints;
         }
 
-        private static void copy(float3[] vessel, float3[] demon, int index = 0)
+
+        public static void copy<T>(T[] vessel, T[] demon, int index = 0)
         {
             for (int i = index; i < demon.Length + index; i++)
             {

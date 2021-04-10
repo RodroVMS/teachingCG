@@ -10,7 +10,7 @@ namespace Rendering
     /// <summary>
     /// Represents a rasterizer object allowing to draw primitives in a specific texture.
     /// </summary>
-    public class Raster<V, P> where V : struct ,IVertex<V> where P : struct, IProjectedVertex<P>
+    public class Raster<V, P> where V : struct, IVertex<V> where P : struct, IProjectedVertex<P>
     {
         /// <summary>
         /// Gets the specific texture this renderer is drawing at.
@@ -20,7 +20,7 @@ namespace Rendering
         /// <summary>
         /// Initializes a rasterizer to use a specific texture to draw at.
         /// </summary>
-        public Raster (Texture2D renderTarget)
+        public Raster(Texture2D renderTarget)
         {
             if (renderTarget == null)
                 throw new ArgumentNullException("Expected to receive a render target to draw to.");
@@ -123,7 +123,7 @@ namespace Rendering
             RenderTarget[Math.Min(RenderTarget.Width - 1, (int)px), Math.Min(RenderTarget.Height - 1, (int)py)] = PerformPixelShader(pixelInput);
         }
 
-        void DrawPoint(V vertex) 
+        void DrawPoint(V vertex)
         {
             P pixelInput = PerformVertexShader(vertex);
 
@@ -137,7 +137,7 @@ namespace Rendering
             UpdateBuffers(px, py, pixelInput);
         }
 
-        bool ClipSegmentHP(float4 P, float4 N, float4 pV1, float4 pV2, out float alpha1, out float alpha2) 
+        bool ClipSegmentHP(float4 P, float4 N, float4 pV1, float4 pV2, out float alpha1, out float alpha2)
         {
             alpha1 = 0; alpha2 = 1;
             float d1 = dot(pV1 - P, N);
@@ -209,7 +209,7 @@ namespace Rendering
             return true;
         }
 
-        P PerformVertexShader (V v)
+        P PerformVertexShader(V v)
         {
             if (VertexShader == null)
             {
@@ -249,7 +249,7 @@ namespace Rendering
 
             int steps = (int)max(abs(x1 - x2), abs(y1 - y2)) * 2 + 1; // Is not the best, just to grant there is at least one sample for each pixel.
 
-            for (int i=0; i<=steps; i++)
+            for (int i = 0; i <= steps; i++)
             {
                 float alpha = i / (float)steps; // Not using Perspective Correction! Careful!
                 P interpolatedValue = p1.Mul(1 - alpha).Add(p2.Mul(alpha));

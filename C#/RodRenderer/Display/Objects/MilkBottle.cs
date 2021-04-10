@@ -33,17 +33,6 @@ namespace Objects
             hip = ApplyTransform(hip, Transforms.Translate(0f, 2.4f, 0f));
             hip = Intersect(hip, p => p[1] > 0.65 && p[1] < 2);
             return hip;
-            
-            float3[] hip_u = ApplyTransform(hip, Transforms.Scale(0.35f, 1f, 0.35f));
-            hip_u = ApplyTransform(hip_u, Transforms.Translate(0f, 2.4f, 0f));
-            hip_u = Intersect(hip_u, p => p[1] < 2 && p[1] > 1.5);
-
-            float3[] hip_f = ApplyTransform(hip, Transforms.Scale(0.45f, 0.7f, 0.45f));
-            hip_f = ApplyTransform(hip_f, Transforms.Translate(0f, 1.7f, 0f));
-            hip_f = Intersect(hip_f, p => p[1] > 0.5 && p[1] <1.5 );
-
-            float3[] neck = JoinPoints(hip_u, hip_f);
-            return neck;
         }
 
         private static float3[] shapeBottleNeck2()

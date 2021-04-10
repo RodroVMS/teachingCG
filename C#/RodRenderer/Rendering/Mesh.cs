@@ -1,9 +1,10 @@
-﻿using GMath;
-using Rendering;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using GMath;
+using Rendering;
 using static GMath.Gfx;
+using static Utils.Tools;
 
 namespace Renderer
 {
@@ -27,11 +28,38 @@ namespace Renderer
         /// <summary>
         /// Creates a mesh object using vertices, indices and the desired topology.
         /// </summary>
-        public Mesh (V[] vertices, int[] indices, Topology topology = Topology.Triangles)
+        public Mesh(V[] vertices, int[] indices, Topology topology = Topology.Triangles)
         {
             this.Vertices = vertices;
             this.Indices = indices;
             this.Topology = topology;
+        }
+
+        public static Mesh<V> Join(params Mesh<V>[] others)
+        {
+            int verticesTotalLength = 0;
+            int indicesTotalLength = 0;
+            for (int i = 0; i < others.Length; i++)
+            {
+                verticesTotalLength += others[i].Vertices.Length;
+                indicesTotalLength += others[i].Indices.Length;
+            }
+            var bigVerices = new V[verticesTotalLength];
+            var bigIndices = new int[indicesTotalLength];
+
+            int vertexPtr = 0;
+            int indexPtr = 0;
+            V[] joinedVertices = new V[verticesTotalLength];
+            int[] joinedIndices = new int[indicesTotalLength];
+            for (int i = 0; i < others.Length; i++)
+            {
+                copy<V>(joinedVertices, others[i].Vertices, vertexPtr);
+                copy<int>(joinedIndices, others[i].Indices, indexPtr);
+                vertexPtr += others[i].Vertices.Length;
+                indexPtr += others[i].Indices.Length;
+            }
+
+            return new Mesh<V>(joinedVertices, joinedIndices, Topology.Triangles);
         }
 
         /// <summary>
@@ -117,7 +145,7 @@ namespace Renderer
 
                                     newIndices[index++] = Indices[i * 3 + 1];
                                     newIndices[index++] = Indices[i * 3 + 2];
-                                    
+
                                     newIndices[index++] = Indices[i * 3 + 2];
                                     newIndices[index++] = Indices[i * 3 + 0];
                                 }

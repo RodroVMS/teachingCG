@@ -239,16 +239,16 @@ namespace GMath
             float r = 1;//random();
 
             float x = r*cos(u);
-            float y = r*sin(u);
-            float z = random()*3 - 1.5f;
-            switch ((int)(random() * 6))
+            float z = r*sin(u);
+            float y = random()*3 - 1.5f;
+            switch ((int)(random() * 4))
             {
-                case 0: return float3(x, z, -y); // negZ
-                case 2: return float3(x, -z, y); // negY
-                case 3: return float3(x, z, y); // posY
-                case 4: return float3(-x, z, y); // negX
+                case 0: return float3(x, y, -z); // negZ
+                case 2: return float3(x, -y, z); // negY
+                case 3: return float3(x, y, z); // posY
+                case 4: return float3(-x, y, z); // negX
             }
-            return float3(x,z,y);
+            return float3(x,y,z);
         }
 
         #endregion
