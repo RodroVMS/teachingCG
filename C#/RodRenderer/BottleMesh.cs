@@ -8,7 +8,7 @@ using static GMath.Gfx;
 
 namespace Renderer
 {
-    public static class DisplayBottleMesh<V> where V : struct, INormalVertex<V>
+    public static class BottleScene<V> where V : struct, INormalVertex<V>, ICoordinatesVertex<V>
     {
         struct ShadowRayPayload
         {
@@ -41,124 +41,12 @@ namespace Renderer
             return (N, Lin, Lout) => lerp(f1(N, Lin, Lout), f2(N, Lin, Lout), alpha);
         }
 
-        public static void DrawBottleRayCastingMesh(Texture2D texture)
-        {
-            float3 CameraPosition = float3(5, 0f, 0); //float3(3, 2f, 4);
-            float3 LightPosition = float3(4f, 5, 1f);
-            float3 LightIntensity = float3(1, 1, 1) * 100;
-
-            float4x4 viewMatrix = Transforms.LookAtLH(CameraPosition, float3(0, 1, 0), float3(0, 1, 0));
-            float4x4 projectionMatrix = Transforms.PerspectiveFovLH(pi_over_4, texture.Height / (float)texture.Width, 0.01f, 20);
-
-            Scene<V> scene = new Scene<V>();
-            var coffeMaker = GetCoffeMakerMesh();
-            var milkBottle = GetMilkBottleMesh();
-            var waterBottle = GetWaterBottleMesh();
-            var floor = Manifold<V>.Surface(30, 20, (u, v) => 2 * float3(2 * u - 1, sin(u * 15) * 0.02f + cos(v * 13 + u * 16) * 0.03f, 2 * v - 1)).Weld();
-            floor = floor.Transform(Transforms.Translate(0, -0.5f, 0));
-
-            coffeMaker = coffeMaker.Transform(Transforms.Translate(-0.7f, 0, 0.6f));
-            milkBottle = milkBottle.Transform(Transforms.Translate(-0.7f, 0, -0.625f));
-
-            AddToScene(scene, new List<Mesh<V>>() { waterBottle, milkBottle, coffeMaker, floor });
-
-            BRDF[] brdfs =
-            {
-                Mixture(LambertBRDF(float3(0.9f,0.9f,0.9f)), BlinnBRDF(float3(1,1,1), 70), 0.3f),
-                Mixture(LambertBRDF(float3(0.9f,0.7f,0.7f)), BlinnBRDF(float3(1f,1f,1f), 70), 0.3f),
-                Mixture(LambertBRDF(float3(0.6f,0.6f,0.6f)), BlinnBRDF(float3(1,1,1), 70), 0.3f),
-                LambertBRDF(float3(0.4f,0.5f,1f)),
-            };
-
-            Raytracer<ShadowRayPayload, V> shadower = new Raytracer<ShadowRayPayload, V>();
-            shadower.OnAnyHit += delegate (IRaycastContext context, V attribute, ref ShadowRayPayload payload)
-            {
-                // If any object is found in ray-path to the light, the ray is shadowed.
-                payload.Shadowed = true;
-                // No neccessary to continue checking other objects
-                return HitResult.Stop;
-            };
-
-            Raytracer<MyRayPayload, PositionNormal> raycaster = new Raytracer<MyRayPayload, PositionNormal>();
-            raycaster.OnClosestHit += delegate (IRaycastContext context, PositionNormal attribute, ref MyRayPayload payload)
-            {
-                // Move geometry attribute to world space
-                attribute = attribute.Transform(context.FromGeometryToWorld);
-
-                float3 V = normalize(CameraPosition - attribute.Position);
-                float3 L = (LightPosition - attribute.Position);
-                float d = length(L);
-                L /= d; // normalize direction to light reusing distance to light
-
-                float3 N = normalize(attribute.Normal);
-
-                float lambertFactor = max(0, dot(N, L));
-
-                // Check ray to light...
-                ShadowRayPayload shadow = new ShadowRayPayload();
-                shadower.Trace(scene,
-                    RayDescription.FromDir(attribute.Position + N * 0.001f, // Move an epsilon away from the surface to avoid self-shadowing 
-                    L), ref shadow);
-
-                float3 Intensity = (shadow.Shadowed ? 0.0f : 1.0f) * LightIntensity / (d * d);
-
-                payload.Color = brdfs[context.GeometryIndex](N, L, V) * Intensity * lambertFactor;
-            };
-            raycaster.OnMiss += delegate (IRaycastContext context, ref MyRayPayload payload)
-            {
-                payload.Color = float3(0, 0, 1); // Blue, as the sky.
-            };
-
-            for (int px = 0; px < texture.Width; px++)
-                for (int py = 0; py < texture.Height; py++)
-                {
-                    int progress = (px * texture.Height + py);
-                    if (progress % 1000 == 0)
-                    {
-                        Console.Write("\r" + progress * 100 / (float)(texture.Width * texture.Height) + "%            ");
-                    }
-
-                    RayDescription ray = RayDescription.FromScreen(px + 0.5f, py + 0.5f, texture.Width, texture.Height, inverse(viewMatrix), inverse(projectionMatrix), 0, 1000);
-
-                    MyRayPayload coloring = new MyRayPayload();
-
-                    raycaster.Trace(scene as Scene<PositionNormal>, ray, ref coloring);
-
-                    texture.Write(px, py, float4(coloring.Color, 1));
-                }
-        }
-
-        private static void AddToScene(Scene<V> scene, List<Mesh<V>> fig_list)
-        {
-            foreach (var fig in fig_list)
-            {
-                var new_fig = fig.Weld();
-                new_fig.ComputeNormals();
-                scene.Add(new_fig.AsRaycast(RaycastingMeshMode.Grid), Transforms.Identity);
-            }
-        }
-
-        public static void DrawBottleMesh<P>(Raster<V, P> render) where P : struct, IProjectedVertex<P>
-        {
-            SetRenderSettings(render);
-
-            var coffeMaker = GetCoffeMakerMesh();
-            var milkBottle = GetMilkBottleMesh();
-            var waterBottle = GetWaterBottleMesh();
-
-            coffeMaker = coffeMaker.Transform(Transforms.Translate(-0.7f, 0, 0.6f));
-            milkBottle = milkBottle.Transform(Transforms.Translate(-0.7f, 0, -0.625f));
-
-            render.DrawMesh(milkBottle);
-            render.DrawMesh(coffeMaker);
-            render.DrawMesh(waterBottle);
-            render.RenderTarget.Save("test.rbm");
-        }
-
-        private static Mesh<V> GetWaterBottleMesh()
+        public static Mesh<V> GetWaterBottleMesh()
         {
             var l = GetWaterBottleMeshList();
-            Mesh<V> waterBottle = Manifold<V>.MorphMeshes(l, Topology.Triangles);
+            Mesh<V> waterBottle = MorphMeshes(l, Topology.Triangles);
+            waterBottle = waterBottle.Weld();
+            waterBottle.ComputeNormals();
             return waterBottle;
         }
 
@@ -208,10 +96,12 @@ namespace Renderer
 
         }
 
-        private static Mesh<V> GetMilkBottleMesh()
+        public static Mesh<V> GetMilkBottleMesh()
         {
             var l = GetMilkBottleMeshList();
-            Mesh<V> milkBottle = Manifold<V>.MorphMeshes(l, Topology.Triangles);
+            Mesh<V> milkBottle = MorphMeshes(l, Topology.Triangles);
+            milkBottle = milkBottle.Weld();
+            milkBottle.ComputeNormals();
             return milkBottle;
         }
 
@@ -227,8 +117,6 @@ namespace Renderer
             float3[] bodyControl = { float3(bottomBodyRadius, -bodyHeight / 2, 0), float3(upperBodyRadius, bodyHeight / 2, 0) };
             var mainBody = BezierCurves(bodyControl, slices: 15, stacks: 15);
 
-            float a1 = 0.45f;
-            float a2 = 0.8f;
             float3[] upperPartControl = {
                 float3(upperBodyRadius, 0, 0),
                 float3(upperBodyRadius, upperPartHeight * 0.2f, 0),
@@ -259,10 +147,12 @@ namespace Renderer
             return milkBottle;
         }
 
-        private static Mesh<V> GetCoffeMakerMesh()
+        public static Mesh<V> GetCoffeMakerMesh()
         {
             var l = GetCoffeMakerMeshList();
-            Mesh<V> coffeMaker = Manifold<V>.MorphMeshes(l, Topology.Triangles);
+            Mesh<V> coffeMaker = MorphMeshes(l, Topology.Triangles);
+            coffeMaker = coffeMaker.Weld();
+            coffeMaker.ComputeNormals();
             return coffeMaker;
         }
 
@@ -332,6 +222,58 @@ namespace Renderer
             return Manifold<V>.Revolution(slices, stacks, t => EvalBezier(control, t), float3(0, 1, 0));
         }
 
+        public static Mesh<V> MorphMeshes(List<Mesh<V>> l, Topology topology)
+        {
+            int[] allStacks = new int[l.Count];
+
+            int newVerticesLenght = 0;
+            int newIndicesLenght = 0;
+
+            for (int i = 0; i < l.Count; i++)
+            {
+                var mesh = l[i];
+                int slices = (int)mesh.Slices;
+                int stacks = (mesh.Vertices.Length / (slices + 1)) - 1;
+                allStacks[i] = stacks;
+
+                newVerticesLenght += (slices + 1) * (stacks + 1);
+                newIndicesLenght += slices * stacks * 6;
+            }
+
+            V[] newVertices = new V[newVerticesLenght];
+            int[] newIndices = new int[newIndicesLenght];
+
+            int acc = 0;
+            for (int i = 0; i < l.Count; i++)
+            {
+                var vertices = l[i].Vertices;
+                Array.Copy(vertices, 0, newVertices, acc, vertices.Length);
+                acc += vertices.Length;
+            }
+
+            acc = 0;
+            int index = 0;
+            for (int f = 0; f < l.Count; f++)
+            {
+                int slices = (int)l[f].Slices;
+                int stacks = allStacks[f];
+                for (int i = 0; i < slices; i++)
+                    for (int j = 0; j < stacks; j++)
+                    {
+                        newIndices[index++] = acc + i * (slices + 1) + j;
+                        newIndices[index++] = acc + (i + 1) * (slices + 1) + j;
+                        newIndices[index++] = acc + (i + 1) * (slices + 1) + (j + 1);
+
+                        newIndices[index++] = acc + i * (slices + 1) + j;
+                        newIndices[index++] = acc + (i + 1) * (slices + 1) + (j + 1);
+                        newIndices[index++] = acc + i * (slices + 1) + (j + 1);
+                    }
+                acc += (slices + 1) * (stacks + 1);
+            }
+
+            return new Mesh<V>(newVertices, newIndices, topology);
+        }
+
         static Mesh<V> CreatePlane(float maxSideA, float maxSideB, float minSideA = 0, float minSideB = 0, int slices = 30, int stacks = 30)
         {
             return Manifold<V>.Surface(slices, stacks, (u, v) =>
@@ -357,23 +299,6 @@ namespace Renderer
             });
         }
 
-        static Mesh<V> CreateCone(float radius, float max_height, float min_height = 0, float top = int.MaxValue, int slices = 30, int stacks = 30)
-        {
-            return Manifold<V>.Surface(slices, stacks, (u, v) =>
-            {
-                float max_v = -min_height;
-                float min_v = -max_height;
-
-                float alpha = u * 2 * pi;
-
-                float x = v * radius * cos(alpha);
-                float y = v * (max_v - min_v) + min_v;
-                float z = v * radius * sin(alpha);
-
-                return float3(-x, min(-y, top), -z);
-            });
-        }
-
         static Mesh<V> CreateCyllinder(float radius, float max_height, float min_height = 0, int slices = 30, int stacks = 30)
         {
             return Manifold<V>.Surface(slices, stacks, (u, v) =>
@@ -388,68 +313,11 @@ namespace Renderer
             });
         }
 
-        static Mesh<V> CreateHiperboloid(float radius, float max_height, float min_height = 4, int direction = 1, int resX = 30, int resY = 30)
-        {
-            max_height = max_height == 0 ? 4 : max_height;
-            min_height = min_height == 0 ? 4 : min_height;
-
-            return Manifold<V>.Surface(30, 30, (u, v) =>
-            {
-                float uu = u * 2 * pi;
-                float vv = pi / max_height - v * pi / min_height; //Sets upper and lower limmits
-
-                float x = radius * cosh(vv) * cos(uu);
-                float z = radius * cosh(vv) * sin(uu);
-                float y = sinh(vv);
-
-                return float3(x, direction * y, z);
-            });
-        }
-
-        static void SetRenderSettings<P>(Raster<V, P> render) where P : struct, IProjectedVertex<P>
-        {
-            render.ClearRT(float4(0, 0, 0.2f, 1));
-
-            float4x4 viewMatrix = Transforms.LookAtLH(float3(5, 0f, 0), float3(0, 0f, 0), float3(0, 1, 0));
-            float4x4 projectionMatrix = Transforms.PerspectiveFovLH(pi_over_4, render.RenderTarget.Height / (float)render.RenderTarget.Width, 0.01f, 40);
-
-            // Define a vertex shader that projects a vertex into the NDC.
-            render.VertexShader = v =>
-            {
-                float4 hPosition = float4(v.Position, 1);
-                hPosition = mul(hPosition, viewMatrix);
-                hPosition = mul(hPosition, projectionMatrix);
-                return new P { Homogeneous = hPosition };
-            };
-
-            // Define a pixel shader that colors using a constant value
-            render.PixelShader = p =>
-            {
-                return float4(p.Homogeneous.x / 1024.0f, p.Homogeneous.y / 512.0f, 1, 1);
-            };
-        }
-
         public static void ApplyTransforms(float4x4 transform, List<Mesh<V>> mesh_list)
         {
             for (int i = 0; i < mesh_list.Count; i++)
             {
                 mesh_list[i] = mesh_list[i].Transform(transform);
-            }
-        }
-
-        public static void ConvertTo(Topology topology, List<Mesh<V>> mesh_list)
-        {
-            for (int i = 0; i < mesh_list.Count; i++)
-            {
-                mesh_list[i] = mesh_list[i].ConvertTo(topology);
-            }
-        }
-
-        public static void DrawMeshAll<P>(Raster<V, P> render, List<Mesh<V>> mesh_list) where P : struct, IProjectedVertex<P>
-        {
-            for (int i = 0; i < mesh_list.Count; i++)
-            {
-                render.DrawMesh(mesh_list[i]);
             }
         }
     }

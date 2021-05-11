@@ -127,8 +127,9 @@ namespace GMath
 
         #region Inverse
 
-        public static float1x1 inverse(float1x1 m)
-        {
+#pragma region inverse
+
+        public static float1x1 inverse(float1x1 m) {
             if (m._m00 == 0.0f)
                 return 0.0f;
 
@@ -206,11 +207,11 @@ namespace GMath
                 (-Min03 / det), (+Min13 / det), (-Min23 / det), (+Min33 / det));
         }
 
-        #endregion
+    #endregion
 
-        #region Randoms
+    #region Randoms
 
-        static GRandom __random = new GRandom();
+    static GRandom __random = new GRandom();
 
         public static float random()
         {
@@ -235,103 +236,6 @@ namespace GMath
                 case 5: return float3(1, u, v); // posX
             }
             return float3(0, 0, 0); // should never occur... but compiler doesn't know...
-        }
-
-        public static float3 randomInHiperboloid()
-        {
-            float v = random() * 2 * pi;
-            float u = random() * 2 * pi;
-
-            float x = cosh(v) * cos(u) * 0.37f;
-            float z = cosh(v) * sin(u) * 0.37f;
-            float y = sinh(v) * 0.7f;
-
-            switch ((int)(random() * 2))
-            {
-                case 0: return float3(x, y, z);
-                case 1: return float3(x, -y, z);
-            }
-            return float3(0, 0, 0);
-        }
-
-        public static float3 randomInHalfParabole()
-        {
-            float x = random() * 0.5f;
-            float z = random();
-            float y = random() * 0.2f + pow(z, 2);
-
-            return float3(x, y, z);
-        }
-
-        public static float3 randomInCone()
-        {
-            float u = random() * 2 * pi;
-            float r = random();
-            float x = r * cos(u), y = r * 2f - 1, z = r * sin(u);
-
-            return float3(x, y, z);
-        }
-
-        public static float3 randomInLongCone()
-        {
-            float u = random() * 2 * pi;
-            float r = random() * 2;
-            float x = r * cos(u), y = r * 6f - 1, z = r * sin(u);
-
-            return float3(x, y, z);
-        }
-
-        public static float3 randomInRectTrapezoid()
-        {
-            float x = random() * 0.2f;
-            float z = random() * 0.5f;
-            float y = min(random() * ((-2f) * z + 1), 0.7f);
-            return float3(x, y, z);
-        }
-
-        public static float3 randomInTrapezoid()
-        {
-            float3 rect = randomInRectTrapezoid();
-            switch ((int)(random() * 2))
-            {
-                case 0: return float3(rect[0], rect[1], rect[2]);
-                case 1: return float3(rect[0], rect[1], -rect[2]);
-            }
-            return float3(0, 0, 0);
-        }
-
-        public static float3 randomInEllipsoid()
-        {
-            float u = random() * 2 * pi;
-            float v = random() * 2 * pi;
-            //float a = random()*1.2f, b = random()*2, c = random();
-            float a = 1f, b = 2, c = 1;
-
-            return float3(a * cos(v) * cos(u), b * cos(v) * sin(u), c * sin(v));
-        }
-
-        public static float3 RandomInPlaneZX()
-        {
-            float x = random() * 4 - 2, z = random() * 4 - 2, y = 0;
-            return float3(x, y, z);
-        }
-
-        public static float3 randomInCylinder()
-        {
-            float u = random() * 2 * pi;
-            float r = 1;//random();
-
-            float x = r * cos(u);
-            float z = r * sin(u);
-            float y = random() * 3 - 1.5f;
-            switch ((int)(random() * 4))
-            {
-                case 0: return float3(x, y, -z); // negZ
-                case 2: return float3(x, -y, z); // negY
-                case 3: return float3(x, y, z); // posY
-                case 4: return float3(-x, y, z); // negX
-            }
-            return float3(x, y, z);
         }
 
         #endregion

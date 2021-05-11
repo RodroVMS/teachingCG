@@ -5,7 +5,7 @@ using GMath;
 using Rendering;
 using static GMath.Gfx;
 
-namespace Renderer
+namespace Rendering
 {
     public class Mesh<V> where V : struct, IVertex<V>
     {
@@ -25,13 +25,14 @@ namespace Renderer
         public Topology Topology { get; private set; }
 
         /// <summary>
+        /// Creates a mesh object using vertices, indices and the desired topology.
+        /// </summary>
+
+        /// <summary>
         /// Gets the slices of this mesh.
         /// </summary>
         public int? Slices { get; private set; }
 
-        /// <summary>
-        /// Creates a mesh object using vertices, indices and the desired topology.
-        /// </summary>
         public Mesh(V[] vertices, int[] indices, Topology topology = Topology.Triangles, int? slices = null)
         {
             this.Vertices = vertices;
@@ -48,100 +49,7 @@ namespace Renderer
         {
             V[] newVertices = Vertices.Clone() as V[];
             int[] newIndices = Indices.Clone() as int[];
-            return new Mesh<V>(newVertices, newIndices, this.Topology, Slices);
-        }
-
-        #region Mesh Vertices Transforms
-
-        public Mesh<T> Transform<T>(Func<V, T> transform) where T : struct, IVertex<T>
-        {
-            T[] newVertices = new T[Vertices.Length];
-
-            for (int i = 0; i < newVertices.Length; i++)
-                newVertices[i] = transform(Vertices[i]);
-
-            return new Mesh<T>(newVertices, Indices, Topology, Slices);
-        }
-
-        public Mesh<V> Transform(Func<V, V> transform)
-        {
-            return Transform<V>(transform);
-        }
-
-        public Mesh<V> Transform(float4x4 transform)
-        {
-            return Transform(v =>
-            {
-                float4 hP = float4(v.Position, 1);
-                hP = mul(hP, transform);
-                V newVertex = v;
-                newVertex.Position = hP.xyz / hP.w;
-                return newVertex;
-            });
-        }
-
-        #endregion
-
-        /// <summary>
-        /// Changes a mesh to another object with different topology. For instance, from a triangle mesh to a wireframe (lines).
-        /// </summary>
-        public Mesh<V> ConvertTo(Topology topology)
-        {
-            switch (topology)
-            {
-                case Topology.Triangles:
-                    switch (this.Topology)
-                    {
-                        case Topology.Triangles:
-                            return this.Clone(); // No necessary change
-                        case Topology.Lines:
-                            // This problem is NP.
-                            // Try to implement a greedy, that means, recognize the small triangle and so on...
-                            throw new NotImplementedException("Missing implementing line-to-triangle conversion.");
-                        case Topology.Points:
-                            throw new NotImplementedException("Missing implementing point-to-triangle conversion.");
-                    }
-                    break;
-                case Topology.Lines:
-                    switch (this.Topology)
-                    {
-                        case Topology.Points:
-                            // Get the wireframe from surface reconstruction
-                            return ConvertTo(Topology.Triangles).ConvertTo(Topology.Lines);
-                        case Topology.Lines:
-                            return this.Clone(); // nothing to do
-                        case Topology.Triangles:
-                            {
-                                // This is repeating edges for adjacent triangles.... use a hash table to prevent for double linking vertices.
-                                V[] newVertices = Vertices.Clone() as V[];
-                                int[] newIndices = new int[Indices.Length * 2];
-                                int index = 0;
-                                for (int i = 0; i < Indices.Length / 3; i++)
-                                {
-                                    newIndices[index++] = Indices[i * 3 + 0];
-                                    newIndices[index++] = Indices[i * 3 + 1];
-
-                                    newIndices[index++] = Indices[i * 3 + 1];
-                                    newIndices[index++] = Indices[i * 3 + 2];
-
-                                    newIndices[index++] = Indices[i * 3 + 2];
-                                    newIndices[index++] = Indices[i * 3 + 0];
-                                }
-                                return new Mesh<V>(newVertices, newIndices, Topology.Lines, Slices);
-                            }
-                    }
-                    break;
-                case Topology.Points:
-                    {
-                        V[] newVertices = Vertices.Clone() as V[];
-                        int[] indices = new int[newVertices.Length];
-                        for (int i = 0; i < indices.Length; i++)
-                            indices[i] = i;
-                        return new Mesh<V>(newVertices, indices, Topology.Points, Slices);
-                    }
-            }
-
-            throw new ArgumentException("Wrong topology.");
+            return new Mesh<V>(newVertices, newIndices, this.Topology, this.Slices);
         }
     }
 
@@ -271,6 +179,9 @@ namespace Renderer
             return new Mesh<V>(newVertices.ToArray(), newIndices, mesh.Topology, mesh.Slices);
         }
 
+        /// <summary>
+        /// Computes the normals of the mesh vertices using the positions and the orientation of the triangles.
+        /// </summary>
         public static void ComputeNormals<V>(this Mesh<V> mesh) where V : struct, INormalVertex<V>
         {
             if (mesh.Topology != Topology.Triangles)
@@ -297,6 +208,10 @@ namespace Renderer
             for (int i = 0; i < mesh.Vertices.Length; i++)
                 mesh.Vertices[i].Normal = normalize(normals[i]);
         }
+
+        /// <summary>
+        /// Computes the Axis-aligned boundary box of the mesh using the vertex positions.
+        /// </summary>
         public static AABB3D ComputeAABB<V>(this Mesh<V> mesh) where V : struct, IVertex<V>
         {
             float3 minimum = float3(float.MaxValue, float.MaxValue, float.MaxValue);
@@ -308,13 +223,13 @@ namespace Renderer
             }
             return new AABB3D { Minimum = minimum, Maximum = maximum };
         }
-
     }
+
 
     /// <summary>
     /// Tool class to create different mesh from parametric methods.
     /// </summary>
-    public class Manifold<V> where V : struct, IVertex<V>
+    public class Manifold<V> where V : struct, ICoordinatesVertex<V>
     {
         public static Mesh<V> Surface(int slices, int stacks, Func<float, float, float3> generating)
         {
@@ -325,23 +240,34 @@ namespace Renderer
             // A manifold with x,y,z mapped from (0,0)-(1,1)
             for (int i = 0; i <= stacks; i++)
                 for (int j = 0; j <= slices; j++)
-                    vertices[i * (slices + 1) + j] = new V { Position = generating(j / (float)slices, i / (float)stacks) };
+                    vertices[i * (slices + 1) + j] = new V { Position = generating(j / (float)slices, i / (float)stacks), Coordinates = float2(j / (float)slices, i / (float)stacks) };
 
             // Filling the indices of the quad. Vertices are linked to adjacent.
             int index = 0;
             for (int i = 0; i < stacks; i++)
                 for (int j = 0; j < slices; j++)
-                {
-                    indices[index++] = i * (slices + 1) + j;
-                    indices[index++] = (i + 1) * (slices + 1) + j;
-                    indices[index++] = (i + 1) * (slices + 1) + (j + 1);
+                    if ((i + j) % 2 == 0)
+                    {
+                        indices[index++] = i * (slices + 1) + j;
+                        indices[index++] = (i + 1) * (slices + 1) + j;
+                        indices[index++] = (i + 1) * (slices + 1) + (j + 1);
 
-                    indices[index++] = i * (slices + 1) + j;
-                    indices[index++] = (i + 1) * (slices + 1) + (j + 1);
-                    indices[index++] = i * (slices + 1) + (j + 1);
-                }
+                        indices[index++] = i * (slices + 1) + j;
+                        indices[index++] = (i + 1) * (slices + 1) + (j + 1);
+                        indices[index++] = i * (slices + 1) + (j + 1);
+                    }
+                    else
+                    {
+                        indices[index++] = i * (slices + 1) + j;
+                        indices[index++] = (i + 1) * (slices + 1) + j;
+                        indices[index++] = i * (slices + 1) + (j + 1);
 
-            return new Mesh<V>(vertices, indices, slices: slices);
+                        indices[index++] = i * (slices + 1) + (j + 1);
+                        indices[index++] = (i + 1) * (slices + 1) + j;
+                        indices[index++] = (i + 1) * (slices + 1) + (j + 1);
+                    }
+
+            return new Mesh<V>(vertices, indices, Topology.Triangles, slices);
         }
 
         public static Mesh<V> Generative(int slices, int stacks, Func<float, float3> g, Func<float3, float, float3> f)
@@ -362,58 +288,6 @@ namespace Renderer
         public static Mesh<V> Lofted(int slices, int stacks, Func<float, float3> g1, Func<float, float3> g2)
         {
             return Surface(slices, stacks, (u, v) => g1(u) * (1 - v) + g2(u) * v);
-        }
-
-        public static Mesh<V> MorphMeshes(List<Mesh<V>> l, Topology topology)
-        {
-            int[] allStacks = new int[l.Count];
-
-            int newVerticesLenght = 0;
-            int newIndicesLenght = 0;
-
-            for (int i = 0; i < l.Count; i++)
-            {
-                var mesh = l[i];
-                int slices = (int)mesh.Slices;
-                int stacks = (mesh.Vertices.Length / (slices + 1)) - 1;
-                allStacks[i] = stacks;
-
-                newVerticesLenght += (slices + 1) * (stacks + 1);
-                newIndicesLenght += slices * stacks * 6;
-            }
-
-            V[] newVertices = new V[newVerticesLenght];
-            int[] newIndices = new int[newIndicesLenght];
-
-            int acc = 0;
-            for (int i = 0; i < l.Count; i++)
-            {
-                var vertices = l[i].Vertices;
-                Array.Copy(vertices, 0, newVertices, acc, vertices.Length);
-                acc += vertices.Length;
-            }
-
-            acc = 0;
-            int index = 0;
-            for (int f = 0; f < l.Count; f++)
-            {
-                int slices = (int)l[f].Slices;
-                int stacks = allStacks[f];
-                for (int i = 0; i < slices; i++)
-                    for (int j = 0; j < stacks; j++)
-                    {
-                        newIndices[index++] = acc + i * (slices + 1) + j;
-                        newIndices[index++] = acc + (i + 1) * (slices + 1) + j;
-                        newIndices[index++] = acc + (i + 1) * (slices + 1) + (j + 1);
-
-                        newIndices[index++] = acc + i * (slices + 1) + j;
-                        newIndices[index++] = acc + (i + 1) * (slices + 1) + (j + 1);
-                        newIndices[index++] = acc + i * (slices + 1) + (j + 1);
-                    }
-                acc += (slices + 1) * (stacks + 1);
-            }
-
-            return new Mesh<V>(newVertices, newIndices, topology);
         }
     }
 

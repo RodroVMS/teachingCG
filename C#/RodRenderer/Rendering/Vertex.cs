@@ -1,9 +1,9 @@
-﻿using System;
+﻿using GMath;
+using System;
 using System.Collections.Generic;
 using System.Text;
-using GMath;
 
-namespace Renderer
+namespace Rendering
 {
     /// <summary>
     /// Represents an interpolable vertices.
@@ -33,7 +33,7 @@ namespace Renderer
         float3 Position { get; set; }
     }
 
-    public interface INormalVertex<V> : IVertex<V> where V : struct
+    public interface INormalVertex<V> : IVertex<V> where V: struct
     {
         /// <summary>
         /// Gets or sets the 3D normal of a vertex
@@ -41,10 +41,18 @@ namespace Renderer
         float3 Normal { get; set; }
     }
 
+    public interface ICoordinatesVertex<V> : IVertex<V> where V : struct
+    {
+        /// <summary>
+        /// Gets or sets the 2D texture coordinates of a vertex
+        /// </summary>
+        float2 Coordinates { get; set; }
+    }
+
     /// <summary>
     /// Represents a vertex with 4D homogeneous coordinates.
     /// </summary>
-    public interface IProjectedVertex<V> : IInterpolable<V> where V : struct
+    public interface IProjectedVertex<V> : IInterpolable<V> where V :struct
     {
         /// <summary>
         /// Gets or sets the homogeneous coordinates for this vertex.
