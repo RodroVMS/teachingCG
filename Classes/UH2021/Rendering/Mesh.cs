@@ -195,7 +195,7 @@ namespace Rendering
                 float3 p2 = mesh.Vertices[mesh.Indices[i * 3 + 2]].Position;
 
                 // Compute the normal of the triangle.
-                float3 N =  !mesh.NegativeNormal ? cross(p1 - p0, p2 - p0): cross(p1 - p0, p2 - p0);
+                float3 N =  !mesh.NegativeNormal ? cross(p1 - p0, p2 - p0): -cross(p1 - p0, p2 - p0);
 
                 // Add the normal to the vertices involved
                 normals[mesh.Indices[i * 3 + 0]] += N;
