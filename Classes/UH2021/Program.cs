@@ -184,7 +184,31 @@ namespace Renderer
         }
 
         #region Scenes
+        static void CreateBottleRayCastScene(Scene<PositionNormalCoordinate, Material> scene)
+        {   
+            int slices = 15, stacks = 15;
+            (Mesh<PositionNormalCoordinate> waterBottle, Mesh<PositionNormalCoordinate> waterLid, Mesh<PositionNormalCoordinate> labelOut, Mesh<PositionNormalCoordinate> labelIn) = SceneLogic.MeshObjects<PositionNormalCoordinate>.GetWaterBottle(slices, stacks);
+            float4x4 waterBottlePosition = Transforms.Identity;
+            SceneLogic.TextureObjects.TextureCrystalBottle(waterBottle, waterBottlePosition, scene);
+            SceneLogic.TextureObjects.TextureBottleLid(waterLid, waterBottlePosition, scene);
+            SceneLogic.TextureObjects.TextureBottleLabel(labelOut, waterBottlePosition, scene);
+            SceneLogic.TextureObjects.TextureBottleLabel(labelIn, waterBottlePosition, scene);
 
+            (Mesh<PositionNormalCoordinate> milkBottle, Mesh<PositionNormalCoordinate> milkLid, Mesh<PositionNormalCoordinate> milk) = SceneLogic.MeshObjects<PositionNormalCoordinate>.GetMilkBottle(slices, stacks);
+            float4x4 milkBottlePosition = Transforms.Translate(-0.7f, 0, -0.625f);
+            // milkBottlePosition = Transforms.Identity;
+            SceneLogic.TextureObjects.TextureCrystalBottle(milkBottle, milkBottlePosition, scene);
+            SceneLogic.TextureObjects.TextureBottleLid(milkLid, milkBottlePosition, scene);
+            SceneLogic.TextureObjects.TextureMilk(milk, milkBottlePosition, scene);
+
+            Mesh<PositionNormalCoordinate> coffeMaker = SceneLogic.MeshObjects<PositionNormalCoordinate>.GetCoffeMaker(slices, stacks);
+            float4x4 coffeMakerPosition = Transforms.Translate(-0.7f, 0, 0.6f);
+            // coffeMakerPosition = Transforms.Identity;
+            SceneLogic.TextureObjects.TextureCoffeMaker(coffeMaker, coffeMakerPosition, scene);
+
+
+            SceneLogic.TextureObjects.TextureWoodBoxScene(LightPosition, LightIntensity, scene);
+        }
         static void CreateRaycastScene(Scene<PositionNormalCoordinate, Material> scene)
         {
             Texture2D planeTexture = Texture2D.LoadFromFile("wood.jpeg");
@@ -263,19 +287,29 @@ namespace Renderer
         }
 
         // Scene Setup
-        static float3 CameraPosition = float3(2, 4f, 4);
-        static float3 LightPosition = float3(3, 5, -2);
-        static float3 LightIntensity = float3(1, 1, 1) * 100;
+        // static float3 CameraPosition = float3(3f, 1f, 0);
+        // static float3 LightPosition = float3(3, 2, 0);
+        // static float3 LightIntensity = float3(1, 1, 1) * 250;
+        static float3 Target = float3(0, 0.5f, 0);
+        static float3 CameraPosition = float3(5f, 0, 0);
+        static float3 LightPosition = float3(6.5f, 1.5f, 0);
+        // RayTracing
+        static float3 LightIntensity = float3(1, 1, 1) * 650;
+        // Pathtracing
+        //static float3 LightIntensity = float3(1, 1, 1) * 400;
+        static int bounces = 3;
+        static int res = 128;
+        static bool raytracing = false;
 
         static void Raytracing (Texture2D texture)
         {
             // View and projection matrices
-            float4x4 viewMatrix = Transforms.LookAtLH(CameraPosition, float3(0, 1, 0), float3(0, 1, 0));
+            float4x4 viewMatrix = Transforms.LookAtLH(CameraPosition, Target, float3(0, 1, 0));
             float4x4 projectionMatrix = Transforms.PerspectiveFovLH(pi_over_4, texture.Height / (float)texture.Width, 0.01f, 20);
 
             Scene<PositionNormalCoordinate, Material> scene = new Scene<PositionNormalCoordinate, Material>();
-            //CreateMeshScene(scene);
-            CreateRaycastScene(scene);
+            CreateBottleRayCastScene(scene);
+            // CreateRaycastScene(scene);
 
             // Raycaster to trace rays and check for shadow rays.
             Raytracer<ShadowRayPayload, PositionNormalCoordinate, Material> shadower = new Raytracer<ShadowRayPayload, PositionNormalCoordinate, Material>();
@@ -363,7 +397,7 @@ namespace Renderer
                     RayDescription ray = RayDescription.FromScreen(px + 0.5f, py + 0.5f, texture.Width, texture.Height, inverse(viewMatrix), inverse(projectionMatrix), 0, 1000);
 
                     RTRayPayload coloring = new RTRayPayload();
-                    coloring.Bounces = 3;
+                    coloring.Bounces = bounces;
 
                     raycaster.Trace(scene, ray, ref coloring);
 
@@ -374,12 +408,12 @@ namespace Renderer
         static void Pathtracing(Texture2D texture, int pass)
         {
             // View and projection matrices
-            float4x4 viewMatrix = Transforms.LookAtLH(CameraPosition, float3(0, 1, 0), float3(0, 1, 0));
+            float4x4 viewMatrix = Transforms.LookAtLH(CameraPosition, Target, float3(0, 1, 0));
             float4x4 projectionMatrix = Transforms.PerspectiveFovLH(pi_over_4, texture.Height / (float)texture.Width, 0.01f, 20);
 
             Scene<PositionNormalCoordinate, Material> scene = new Scene<PositionNormalCoordinate, Material>();
-            //CreateMeshScene(scene);
-            CreateRaycastScene(scene);
+            CreateBottleRayCastScene(scene);
+            // CreateRaycastScene(scene);
 
             // Raycaster to trace rays and lit closest surfaces
             Raytracer<PTRayPayload, PositionNormalCoordinate, Material> raycaster = new Raytracer<PTRayPayload, PositionNormalCoordinate, Material>();
@@ -439,7 +473,7 @@ namespace Renderer
                     float4 accum = texture.Read(px, py) * pass;
                     PTRayPayload coloring = new PTRayPayload();
                     coloring.Importance = float3(1, 1, 1);
-                    coloring.Bounces = 3;
+                    coloring.Bounces = bounces;
 
                     raycaster.Trace(scene, ray, ref coloring);
 
@@ -450,10 +484,9 @@ namespace Renderer
         public static void Main()
         {
             // Texture to output the image.
-            Texture2D texture = new Texture2D(512, 512);
+            Texture2D texture = new Texture2D(res, res);
 
-            bool UseRT = false;
-            if (UseRT)
+            if (raytracing)
             {
                 Stopwatch stopwatch = new Stopwatch();
 
