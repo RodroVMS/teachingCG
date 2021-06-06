@@ -153,7 +153,7 @@ namespace SceneLogic
                         MinMagFilter = Filter.Linear
                     },
                 },
-                mul(Transforms.RotateXGrad(270), Transforms.Translate(0, 0, -3f)));
+                mul(Transforms.RotateXGrad(270), Transforms.Translate(0, 0, -3.5f)));
             
             // Rigt Wall
             scene.Add(Raycasting.PlaneXZ.AttributesMap(a => new PositionNormalCoordinate { Position = a, Coordinates = float2(a.x*0.2f, a.z*0.2f), Normal = float3(0, 1, 0) }),
@@ -166,7 +166,7 @@ namespace SceneLogic
                     },
                     //Emissive = 0.003f
                 },
-                mul(Transforms.RotateXGrad(90), Transforms.Translate(0, 0, 3f)));
+                mul(Transforms.RotateXGrad(90), Transforms.Translate(0, 0, 3.5f)));
             
 
             // Front Wall
