@@ -170,16 +170,16 @@ namespace SceneLogic
             
 
             // Front Wall
-            //scene.Add(Raycasting.PlaneYZ.AttributesMap(a => new PositionNormalCoordinate { Position = a, Coordinates = float2(a.x*0.2f, a.z*0.2f), Normal = float3(0, 1, 0) }),
-            //    new Material {
-            //        DiffuseMap = planeTexture,
-            //        Diffuse = float3(1, 1, 1),
-            //        TextureSampler = new Sampler {
-            //            Wrap = WrapMode.Repeat,
-            //            MinMagFilter = Filter.Linear
-            //        }
-            //    },
-            //   Transforms.Translate(6, 0, -2f));
+            scene.Add(Raycasting.PlaneYZ.AttributesMap(a => new PositionNormalCoordinate { Position = a, Coordinates = float2(a.x*0.2f, a.z*0.2f), Normal = float3(0, 1, 0) }),
+                new Material {
+                    DiffuseMap = planeTexture,
+                    Diffuse = float3(1, 1, 1),
+                    TextureSampler = new Sampler {
+                        Wrap = WrapMode.Repeat,
+                        MinMagFilter = Filter.Linear
+                    }
+                },
+               Transforms.Translate(7, 1, -2f));
             
             // Light Bomb
             var sphereModel = Raycasting.UnitarySphere.AttributesMap(a => new PositionNormalCoordinate { Position = a, Coordinates = float2(atan2(a.z, a.x) * 0.5f / pi + 0.5f, a.y), Normal = normalize(a) });
