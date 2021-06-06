@@ -1,4 +1,4 @@
-﻿using GMath;
+using GMath;
 using Rendering;
 using System;
 using System.Diagnostics;
