@@ -502,13 +502,16 @@ namespace Renderer
             }
             else
             {
-                int pass = 0;
+                int pass = 1;
                 while (true)
                 {
                     Console.WriteLine("Pass: " + pass);
                     Pathtracing(texture, pass);
                     texture.Save("test.rbm");
                     pass++;
+
+                    if (pass % 500 == 0)
+                        texture.Save($"path{pass}.rbm");
                 }
             }
         }
