@@ -27,10 +27,16 @@ namespace Rendering
         /// <summary>
         /// Creates a mesh object using vertices, indices and the desired topology.
         /// </summary>
-        public Mesh (V[] vertices, int[] indices, Topology topology = Topology.Triangles)
+
+        public int? Slices {get; private set;}
+
+        public bool NegativeNormal = false;
+
+        public Mesh (V[] vertices, int[] indices, int? slices, Topology topology = Topology.Triangles)
         {
             this.Vertices = vertices;
             this.Indices = indices;
+            this.Slices = slices;
             this.Topology = topology;
         }
 
@@ -42,7 +48,7 @@ namespace Rendering
         {
             V[] newVertices = Vertices.Clone() as V[];
             int[] newIndices = Indices.Clone() as int[];
-            return new Mesh<V>(newVertices, newIndices, this.Topology);
+            return new Mesh<V>(newVertices, newIndices, this.Slices, this.Topology);
         }
     }
 
@@ -57,7 +63,7 @@ namespace Rendering
             for (int i = 0; i < newVertices.Length; i++)
                 newVertices[i] = transform(mesh.Vertices[i]);
 
-            return new Mesh<T>(newVertices, mesh.Indices, mesh.Topology);
+            return new Mesh<T>(newVertices, mesh.Indices, mesh.Slices, mesh.Topology);
         }
 
         public static Mesh<V> Transform<V>(this Mesh<V> mesh, Func<V, V> transform) where V: struct, IVertex<V>
@@ -124,7 +130,7 @@ namespace Rendering
                                     newIndices[index++] = mesh.Indices[i * 3 + 2];
                                     newIndices[index++] = mesh.Indices[i * 3 + 0];
                                 }
-                                return new Mesh<V>(newVertices, newIndices, Topology.Lines);
+                                return new Mesh<V>(newVertices, newIndices, mesh.Slices, Topology.Lines);
                             }
                     }
                     break;
@@ -134,7 +140,7 @@ namespace Rendering
                         int[] indices = new int[newVertices.Length];
                         for (int i = 0; i < indices.Length; i++)
                             indices[i] = i;
-                        return new Mesh<V>(newVertices, indices, Topology.Points);
+                        return new Mesh<V>(newVertices, indices, mesh.Slices, Topology.Points);
                     }
             }
 
@@ -169,7 +175,7 @@ namespace Rendering
             for (int i = 0; i < mesh.Indices.Length; i++)
                 newIndices[i] = mappedVertices[mesh.Indices[i]];
 
-            return new Mesh<V>(newVertices.ToArray(), newIndices, mesh.Topology);
+            return new Mesh<V>(newVertices.ToArray(), newIndices, mesh.Slices, mesh.Topology);
         }
 
         /// <summary>
@@ -189,7 +195,7 @@ namespace Rendering
                 float3 p2 = mesh.Vertices[mesh.Indices[i * 3 + 2]].Position;
 
                 // Compute the normal of the triangle.
-                float3 N = cross(p1 - p0, p2 - p0);
+                float3 N =  !mesh.NegativeNormal ? cross(p1 - p0, p2 - p0): cross(p1 - p0, p2 - p0);
 
                 // Add the normal to the vertices involved
                 normals[mesh.Indices[i * 3 + 0]] += N;
@@ -260,7 +266,7 @@ namespace Rendering
                         indices[index++] = (i + 1) * (slices + 1) + (j + 1);
                     }
 
-            return new Mesh<V>(vertices, indices);
+            return new Mesh<V>(vertices, indices, slices);
         }
 
         public static Mesh<V> Generative(int slices, int stacks, Func<float, float3> g, Func<float3, float, float3> f)

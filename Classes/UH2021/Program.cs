@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace Renderer
 {
-    class Program
+    public class Program
     {
         public struct PositionNormalCoordinate : INormalVertex<PositionNormalCoordinate>, ICoordinatesVertex<PositionNormalCoordinate>
         {
