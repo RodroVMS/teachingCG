@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using static GMath.Gfx;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace Rendering
 {
@@ -76,7 +78,7 @@ namespace Rendering
                         return border;
                     break;
                 case WrapMode.Clamp:
-                    uv = clamp(uv, 0.0f, 0.99999999999f);
+                    uv = clamp(uv, 0.0f, 0.9999f);
                     break;
                 case WrapMode.Repeat:
                     uv = ((uv % 1) + 1) % 1;
@@ -112,6 +114,22 @@ namespace Rendering
                         sample11 * (w.x) * (w.y);
                 default:
                     throw new ArgumentOutOfRangeException();
+            }
+        }
+
+
+        public static Texture2D LoadFromFile(string path)
+        {
+            using (Image<Rgba32> image = Image<Rgba32>.Load(path).CloneAs<Rgba32>())
+            {
+                Texture2D texture = new Texture2D(image.Width, image.Height);
+                for (int i = 0; i < image.Height; i++)
+                    for (int j = 0; j < image.Width; j++)
+                    {
+                        var color = image[j, i];
+                        texture[j, i] = float4(color.R / 255f, color.G / 255f, color.B / 255f, color.A / 255f);
+                    }
+                return texture;
             }
         }
     }
