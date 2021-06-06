@@ -1,5 +1,5 @@
 using Rendering;
-using static Rendering.Program;
+using static Renderer.Program;
 using GMath;
 using static GMath.Gfx;
 
