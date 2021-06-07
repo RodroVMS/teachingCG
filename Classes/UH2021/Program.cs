@@ -294,12 +294,12 @@ namespace Renderer
         static float3 CameraPosition = float3(5f, 0.5f, 0);
         static float3 LightPosition = float3(6f, 1f, 1f);
         // RayTracing
-        static float3 LightIntensity = float3(1, 1, 1) * 650;
+        //static float3 LightIntensity = float3(1, 1, 1) * 650;
         // Pathtracing
-        //static float3 LightIntensity = float3(1, 1, 1) * 400;
+        static float3 LightIntensity = float3(1, 1, 1) * 800;
         static int bounces = 5;
         static int res = 512;
-        static bool raytracing = true;
+        static bool raytracing = false;
 
         static void Raytracing (Texture2D texture)
         {
