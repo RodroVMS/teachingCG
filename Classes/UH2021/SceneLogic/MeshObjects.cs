@@ -145,6 +145,8 @@ namespace  SceneLogic
                 float3(0, -bodyHeight / 2, 0), 
                 float3(bottomBodyRadius, -bodyHeight / 2, 0),
                 float3(bottomBodyRadius, -bodyHeight / 2, 0), 
+                float3(bottomBodyRadius, -bodyHeight / 2, 0),
+                float3(bottomBodyRadius, -bodyHeight / 2, 0), 
                 float3(bottomBodyRadius, -bodyHeight / 2, 0), 
                 float3(upperBodyRadius, bodyHeight / 2, 0) 
             };
@@ -249,7 +251,7 @@ namespace  SceneLogic
 
         public static Mesh<V> CreateCoffeMaker(int slices, int stacks)
         {
-            float bodyHeight = 1.2f;
+            float bodyHeight = 1.3f;
             float bottomRadius = 0.4f;
             float upperRadius = 0.8f * bottomRadius;
 
@@ -281,10 +283,12 @@ namespace  SceneLogic
             var topBody = SceneLogic.Utils<V>.CreateCartesianOval(upperRadius, maxHeight:0.05f, zGrowth:0.125f, yGrowth:0.04f, minHeight:0, slices:slices, stacks:stacks);
             topBody = topBody.Transform(Transforms.Translate(0, bodyHeight, 0));
 
-            var decorator = SceneLogic.Utils<V>.CreateCircle(0.5f, slices, stacks);
+            var decorator1 = SceneLogic.Utils<V>.CreateCircle(0.05f, slices, stacks);
+            var decorator2 = SceneLogic.Utils<V>.CreateCircle(0.025f, slices, stacks);
 
+            decorator1 = decorator1.Transform(mul(Transforms.RotateZGrad(-90), Transforms.Translate(bottomRadius, bodyHeight*(3/8f) - 0.05f, 0)));
 
-            var coffeMaker = new List<Mesh<V>>() {lowerBody, upperBody, topBody};
+            var coffeMaker = new List<Mesh<V>>() {lowerBody, upperBody, topBody, decorator1};
             SceneLogic.Utils<V>.ApplyTransforms(Transforms.Translate(0, -1, 0), coffeMaker);
             return SceneLogic.Utils<V>.MorphMeshes(coffeMaker, Topology.Triangles);
         }
@@ -299,10 +303,8 @@ namespace  SceneLogic
             for (int i = 0; i < count; i++)
             {
                 balconyWindows.Add(CreateBalconyWindow(height, width, slices, stacks, Transforms.Translate(0, 1 - sepparation*i, 0)));
-            }
-            for (int i = 0; i < count; i++)
-            {
                 balconyWindows.Add(CreateBalconyWindow(height, width, slices, stacks, Transforms.Translate(0, 1 - sepparation*i, -0.6f)));
+                balconyWindows.Add(CreateBalconyWindow(height, width, slices, stacks, Transforms.Translate(0, 1 - sepparation*i, -1.2f)));
             }
             Mesh<V> windows = Utils<V>.MorphMeshes(balconyWindows, Topology.Triangles);
             windows = windows.Weld();

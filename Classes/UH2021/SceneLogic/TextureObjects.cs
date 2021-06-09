@@ -18,7 +18,7 @@ namespace SceneLogic
                 SpecularPower = 260,
 
                 WeightDiffuse = 0f,
-                WeightFresnel = 1f,
+                WeightFresnel = 0.1f,
                 RefractionIndex = 1.2f//1.6f,
             }, transform);
         }
@@ -60,10 +60,10 @@ namespace SceneLogic
                         Wrap = WrapMode.Repeat,
                         MinMagFilter = Filter.Linear 
                     },
-                    Specular = float3(0.1f, 0.1f, 0.1f),
+                    Specular = float3(0.05f, 0.05f, 0.05f),
                     SpecularPower = 350,
                     WeightDiffuse = 1f,
-                    WeightMirror = 1.0f,
+                    WeightGlossy = 1f,
             }, transform);
         }
 
@@ -106,6 +106,10 @@ namespace SceneLogic
                     Wrap = WrapMode.Repeat,
                     MinMagFilter = Filter.Linear 
                 },
+                Specular = float3(0.05f, 0.05f, 0.05f),
+                SpecularPower = 350,
+                WeightDiffuse = 1f,
+                WeightGlossy = 0.5f,
             }, transform);
         }
 
@@ -139,10 +143,10 @@ namespace SceneLogic
                         MinMagFilter = Filter.Linear 
                     },
                     // Emissive = 0.03f
-                    // Specular = float3(1, 1, 1),
-                    // SpecularPower = 260,
-                    // WeightDiffuse = 2.5f,
-                    // WeightMirror = 1.0f,
+                    Specular = float3(1, 1, 1),
+                    SpecularPower = 260,
+                    WeightDiffuse = 2.5f,
+                    WeightMirror = 1f,
                 },
                 Transforms.Translate(0, -1.0f, 0));
 
@@ -169,7 +173,7 @@ namespace SceneLogic
                         MinMagFilter = Filter.Linear
                     },
                 },
-                mul(Transforms.RotateXGrad(270), Transforms.Translate(0, 0, -3.5f)));
+                mul(Transforms.RotateXGrad(270), Transforms.Translate(0, 0, -4.5f)));
             
             // Rigt Wall
             scene.Add(Raycasting.PlaneXZ.AttributesMap(a => new PositionNormalCoordinate { Position = a, Coordinates = float2(a.x*0.2f, a.z*0.2f), Normal = float3(0, 1, 0) }),
@@ -182,7 +186,7 @@ namespace SceneLogic
                     },
                     //Emissive = 0.003f
                 },
-                mul(Transforms.RotateXGrad(90), Transforms.Translate(0, 0, 3.5f)));
+                mul(Transforms.RotateXGrad(90), Transforms.Translate(0, 0, 4.5f)));
             
 
             // Front Wall
