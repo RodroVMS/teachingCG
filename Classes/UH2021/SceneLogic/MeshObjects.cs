@@ -288,5 +288,51 @@ namespace  SceneLogic
             SceneLogic.Utils<V>.ApplyTransforms(Transforms.Translate(0, -1, 0), coffeMaker);
             return SceneLogic.Utils<V>.MorphMeshes(coffeMaker, Topology.Triangles);
         }
+
+        public static Mesh<V> GetBalconyWindow(int slices, int stacks)
+        {
+            List<Mesh<V>> balconyWindows = new List<Mesh<V>>();
+            float height = 0.25f, width = 0.5f;
+            
+            int count = 4;
+            float sepparation = 0.3f;
+            for (int i = 0; i < count; i++)
+            {
+                balconyWindows.Add(CreateBalconyWindow(height, width, slices, stacks, Transforms.Translate(0, 1 - sepparation*i, 0)));
+            }
+            for (int i = 0; i < count; i++)
+            {
+                balconyWindows.Add(CreateBalconyWindow(height, width, slices, stacks, Transforms.Translate(0, 1 - sepparation*i, -0.6f)));
+            }
+            Mesh<V> windows = Utils<V>.MorphMeshes(balconyWindows, Topology.Triangles);
+            windows = windows.Weld();
+            windows.ComputeNormals();
+            return windows;
+        }
+
+        private static Mesh<V> CreateBalconyWindow(float height, float width, int slices, int stacks, float4x4 transform)
+        {
+            float h = height/2;
+            float w = width/2;
+
+            return Utils<V>.CreatePlane(h, w, -h, -w, slices, stacks).Transform(mul(Transforms.RotateZGrad(90), transform));
+        }
+
+        public static (Mesh<V>, Mesh<V>) TestScene(int slices, int stacks)
+        {
+            var lightSource = Utils<V>.CreateCircle(0.5f, slices, stacks);
+            lightSource = lightSource.Transform(Transforms.RotateZGrad(90));
+
+            var glass = CreateBalconyWindow(0.5f, 0.5f, slices, stacks, Transforms.Translate(0.5f, 0, 0));
+            glass = glass.Transform(mul(Transforms.RotateZGrad(90), Transforms.Translate(0.5f, 0, 0)));
+
+
+            lightSource = lightSource.Weld();
+            lightSource.ComputeNormals();
+
+            glass = glass.Weld();
+            glass.ComputeNormals();
+            return (lightSource, glass);
+        }
     }
 }

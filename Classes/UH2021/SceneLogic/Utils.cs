@@ -52,6 +52,17 @@ namespace SceneLogic
             });
         }
 
+        public static Mesh<V> CreatePlane(float maxSideA, float maxSideB, float minSideA = 0, float minSideB = 0, int slices = 30, int stacks = 30)
+        {
+            return Manifold<V>.Surface(slices, stacks, (u, v) =>
+            {
+                float x = u * (maxSideA - minSideA) + minSideA;
+                float z = v * (maxSideB - minSideB) + minSideB;
+
+                return float3(x, 0, z);
+            });
+        }
+
         public static Mesh<V> CreateCartesianOval(float baseRadius, float maxHeight, float zGrowth, float yGrowth, float minHeight = 0, int slices = 15, int stacks = 15)
         {
             return Manifold<V>.Surface(slices, stacks, (p1, p2) => 

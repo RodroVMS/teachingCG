@@ -190,25 +190,70 @@ namespace Renderer
             (Mesh<PositionNormalCoordinate> waterBottle, Mesh<PositionNormalCoordinate> waterLid, Mesh<PositionNormalCoordinate> labelOut, Mesh<PositionNormalCoordinate> labelIn) = SceneLogic.MeshObjects<PositionNormalCoordinate>.GetWaterBottle(slices, stacks);
             float4x4 waterBottlePosition = Transforms.Identity;
             SceneLogic.TextureObjects.TextureCrystalBottle(waterBottle, waterBottlePosition, scene);
-            SceneLogic.TextureObjects.TextureBottleLid(waterLid, waterBottlePosition, scene);
-            SceneLogic.TextureObjects.TextureBottleLabel(labelOut, waterBottlePosition, scene);
-            SceneLogic.TextureObjects.TextureBottleLabel(labelIn, waterBottlePosition, scene);
+            // SceneLogic.TextureObjects.TextureBottleLid(waterLid, waterBottlePosition, scene);
+            // SceneLogic.TextureObjects.TextureBottleLabel(labelOut, waterBottlePosition, scene);
+            // SceneLogic.TextureObjects.TextureBottleLabel(labelIn, waterBottlePosition, scene);
 
             (Mesh<PositionNormalCoordinate> milkBottle, Mesh<PositionNormalCoordinate> milkLid, Mesh<PositionNormalCoordinate> milk) = SceneLogic.MeshObjects<PositionNormalCoordinate>.GetMilkBottle(slices, stacks);
             float4x4 milkBottlePosition = Transforms.Translate(-0.7f, 0, -0.625f);
-            // milkBottlePosition = Transforms.Identity;
-            SceneLogic.TextureObjects.TextureCrystalBottle(milkBottle, milkBottlePosition, scene);
-            SceneLogic.TextureObjects.TextureBottleLid(milkLid, milkBottlePosition, scene);
-            SceneLogic.TextureObjects.TextureMilk(milk, milkBottlePosition, scene);
+            // // milkBottlePosition = Transforms.Identity;
+            // SceneLogic.TextureObjects.TextureCrystalBottle(milkBottle, milkBottlePosition, scene);
+            // SceneLogic.TextureObjects.TextureBottleLid(milkLid, milkBottlePosition, scene);
+            // SceneLogic.TextureObjects.TextureMilk(milk, milkBottlePosition, scene);
 
             Mesh<PositionNormalCoordinate> coffeMaker = SceneLogic.MeshObjects<PositionNormalCoordinate>.GetCoffeMaker(slices, stacks);
             float4x4 coffeMakerPosition = Transforms.Translate(-0.7f, 0, 0.6f);
-            // coffeMakerPosition = Transforms.Identity;
-            SceneLogic.TextureObjects.TextureCoffeMaker(coffeMaker, coffeMakerPosition, scene);
+            // // coffeMakerPosition = Transforms.Identity;
+            // SceneLogic.TextureObjects.TextureCoffeMaker(coffeMaker, coffeMakerPosition, scene);
 
+            Mesh<PositionNormalCoordinate> windows = SceneLogic.MeshObjects<PositionNormalCoordinate>.GetBalconyWindow(slices, stacks);
+            windows = windows.Transform(Transforms.Scale(4, 4, 4));
+            SceneLogic.TextureObjects.TextureBalconyWindows(windows, LightPosition, LightIntensity, scene);
 
             SceneLogic.TextureObjects.TextureWoodBoxScene(LightPosition, LightIntensity, scene);
         }
+
+        static void CreateTestScene(Scene<PositionNormalCoordinate, Material> scene)
+        {
+            int slices = 15, stacks = 15;
+            (Mesh<PositionNormalCoordinate> light, Mesh<PositionNormalCoordinate> cryst) = SceneLogic.MeshObjects<PositionNormalCoordinate>.TestScene(slices, stacks);
+            Texture2D planeTexture = Texture2D.LoadFromFile("wood.jpeg");
+            var sphereModel = Raycasting.UnitarySphere.AttributesMap(a => new PositionNormalCoordinate { Position = a, Coordinates = float2(atan2(a.z, a.x) * 0.5f / pi + 0.5f, a.y), Normal = normalize(a) });
+
+            //cryst = cryst.Transform(Transforms.RotateYGrad(180));
+
+            var blue = new Texture2D(1, 1);
+            blue.Write(0, 0, float4(0.2f, 0.2f, 0.8f, 1));
+            scene.Add(cryst.AsRaycast(), new Material
+            {
+                DiffuseMap = blue,
+                TextureSampler = new Sampler {Wrap = WrapMode.Repeat, MinMagFilter = Filter.Linear},
+                Specular = float3(0.0f, 0.0f, 1f),
+                SpecularPower = 260,
+
+                WeightDiffuse = 0,
+                WeightFresnel = 1f, // Glass sphere
+                RefractionIndex = 0.1f
+            },
+            Transforms.Translate(0.8f, 0, 0));
+
+            scene.Add(sphereModel, new Material
+            {
+                DiffuseMap = blue,
+                TextureSampler = new Sampler {Wrap = WrapMode.Repeat, MinMagFilter = Filter.Linear},
+                Specular = float3(0, 0, 0.5f),
+                Emissive = LightIntensity / (4 * pi), // power per unit area
+                WeightDiffuse = 0,
+                WeightFresnel = 1.0f, // Glass sphere
+                RefractionIndex = 1.0f
+            },
+            mul(Transforms.Scale(1f, 1f, 1f), Transforms.Translate(LightPosition)));
+
+            scene.Add(Raycasting.PlaneXZ.AttributesMap(a => new PositionNormalCoordinate { Position = a, Coordinates = float2(a.x*0.2f, a.z*0.2f), Normal = float3(0, 1, 0) }),
+                new Material { DiffuseMap = planeTexture, Diffuse = float3(1, 1, 1), TextureSampler = new Sampler { Wrap = WrapMode.Repeat, MinMagFilter = Filter.Linear } },
+                Transforms.Translate(0, -1, 0));
+        }
+
         static void CreateRaycastScene(Scene<PositionNormalCoordinate, Material> scene)
         {
             Texture2D planeTexture = Texture2D.LoadFromFile("wood.jpeg");
@@ -257,7 +302,7 @@ namespace Renderer
                 WeightFresnel = 1.0f, // Glass sphere
                 RefractionIndex = 1.0f
             },
-               mul(Transforms.Scale(2.4f, 0.4f, 2.4f), Transforms.Translate(LightPosition)));
+            mul(Transforms.Scale(2.4f, 0.4f, 2.4f), Transforms.Translate(LightPosition)));
         }
 
         #endregion
@@ -287,18 +332,20 @@ namespace Renderer
         }
 
         // Scene Setup
-        // static float3 CameraPosition = float3(3f, 1f, 0);
-        // static float3 LightPosition = float3(3, 2, 0);
+        // static float3 CameraPosition = float3(0f, 0f, 0);
+        // static float3 Target = float3(5.5f, 0.5f, 0);
+        // static float3 LightPosition = float3(-2, 0, 0);
         // static float3 LightIntensity = float3(1, 1, 1) * 250;
-        static float3 Target = float3(0, 0.5f, 0);
+        
         static float3 CameraPosition = float3(5f, 0.5f, 0);
-        static float3 LightPosition = float3(6f, 1f, 1f);
+        static float3 Target = float3(0, 0.5f, 0);
+        static float3 LightPosition = float3(5.1f, 1f, 0f);
         // RayTracing
         //static float3 LightIntensity = float3(1, 1, 1) * 650;
         // Pathtracing
-        static float3 LightIntensity = float3(1, 1, 1) * 800;
+        static float3 LightIntensity = float3(1, 1, 1) * 100;
         static int bounces = 5;
-        static int res = 512;
+        static int res = 128;
         static bool raytracing = false;
 
         static void Raytracing (Texture2D texture)
@@ -308,6 +355,7 @@ namespace Renderer
             float4x4 projectionMatrix = Transforms.PerspectiveFovLH(pi_over_4, texture.Height / (float)texture.Width, 0.01f, 20);
 
             Scene<PositionNormalCoordinate, Material> scene = new Scene<PositionNormalCoordinate, Material>();
+            // CreateTestScene(scene);
             CreateBottleRayCastScene(scene);
             // CreateRaycastScene(scene);
 

@@ -109,6 +109,22 @@ namespace SceneLogic
             }, transform);
         }
 
+        public static void TextureBalconyWindows(
+            Mesh<PositionNormalCoordinate> windows,
+            float3 lightPosition,
+            float3 lightIntensity,
+            Scene<PositionNormalCoordinate, Material> scene)
+        {
+            scene.Add(windows.AsRaycast(RaycastingMeshMode.Grid),
+                new Material {
+                    Emissive = lightIntensity / (4 * pi), // power per unit area
+                    WeightDiffuse = 0,
+                    WeightFresnel = 1.0f, // Glass sphere
+                    RefractionIndex = 1.0f
+                },
+                Transforms.Translate(lightPosition));
+        }
+
         public static void TextureWoodBoxScene(float3 lightPosition, float3 lightIntensity, Scene<PositionNormalCoordinate, Material> scene)
         {
             Texture2D planeTexture = Texture2D.LoadFromFile("./Textures/Wood.jpeg");
@@ -170,27 +186,27 @@ namespace SceneLogic
             
 
             // Front Wall
-            scene.Add(Raycasting.PlaneYZ.AttributesMap(a => new PositionNormalCoordinate { Position = a, Coordinates = float2(a.x*0.2f, a.z*0.2f), Normal = float3(0, 1, 0) }),
-                new Material {
-                    DiffuseMap = planeTexture,
-                    Diffuse = float3(1, 1, 1),
-                    TextureSampler = new Sampler {
-                        Wrap = WrapMode.Repeat,
-                        MinMagFilter = Filter.Linear
-                    }
-                },
-               Transforms.Translate(7, 1, -2f));
+            // scene.Add(Raycasting.PlaneYZ.AttributesMap(a => new PositionNormalCoordinate { Position = a, Coordinates = float2(a.x*0.2f, a.z*0.2f), Normal = float3(0, 1, 0) }),
+            //     new Material {
+            //         DiffuseMap = planeTexture,
+            //         Diffuse = float3(1, 1, 1),
+            //         TextureSampler = new Sampler {
+            //             Wrap = WrapMode.Repeat,
+            //             MinMagFilter = Filter.Linear
+            //         }
+            //     },
+            //    Transforms.Translate(7, 1, -2f));
             
-            // Light Bomb
-            var sphereModel = Raycasting.UnitarySphere.AttributesMap(a => new PositionNormalCoordinate { Position = a, Coordinates = float2(atan2(a.z, a.x) * 0.5f / pi + 0.5f, a.y), Normal = normalize(a) });
-            scene.Add(sphereModel, new Material
-                {
-                    Emissive = lightIntensity / (4 * pi), // power per unit area
-                    WeightDiffuse = 0,
-                    WeightFresnel = 1.0f, // Glass sphere
-                    RefractionIndex = 1.0f
-                },
-               mul(Transforms.Scale(0.4f), Transforms.Translate(lightPosition)));
+            // // Light Bomb
+            // var sphereModel = Raycasting.UnitarySphere.AttributesMap(a => new PositionNormalCoordinate { Position = a, Coordinates = float2(atan2(a.z, a.x) * 0.5f / pi + 0.5f, a.y), Normal = normalize(a) });
+            // scene.Add(sphereModel, new Material
+            //     {
+            //         Emissive = lightIntensity / (4 * pi), // power per unit area
+            //         WeightDiffuse = 0,
+            //         WeightFresnel = 1.0f, // Glass sphere
+            //         RefractionIndex = 1.0f
+            //     },
+            //    mul(Transforms.Scale(0.4f), Transforms.Translate(lightPosition)));
         }
     }
 }
