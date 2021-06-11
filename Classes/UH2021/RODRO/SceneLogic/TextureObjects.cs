@@ -142,7 +142,6 @@ namespace SceneLogic
                         Wrap = WrapMode.Repeat,
                         MinMagFilter = Filter.Linear 
                     },
-                    // Emissive = 0.03f
                     Specular = float3(1, 1, 1),
                     SpecularPower = 260,
                     WeightDiffuse = 2.5f,

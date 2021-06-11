@@ -255,9 +255,9 @@ namespace Renderer
         {
             CameraPosition = float3(5f, 0.5f, 0);
             Target = float3(0, 0.5f, 0);
-            res = 256;
+            res = 64;
 
-            bounces = !raytracing ? 4: 8;
+            bounces = !raytracing ? 9: 4;
             LightPosition = !raytracing ? float3(5.1f, -1f, -2.3f): float3(5.1f, 1f, 0f);
             LightIntensity = !raytracing ? float3(1, 1, 1) * 150 :  float3(1, 1, 1) * 650;
 
