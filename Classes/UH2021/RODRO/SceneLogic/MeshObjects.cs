@@ -304,7 +304,7 @@ namespace  SceneLogic
             {
                 balconyWindows.Add(CreateBalconyWindow(height, width, slices, stacks, Transforms.Translate(0, 1 - sepparation*i, 0)));
                 balconyWindows.Add(CreateBalconyWindow(height, width, slices, stacks, Transforms.Translate(0, 1 - sepparation*i, -0.6f)));
-                balconyWindows.Add(CreateBalconyWindow(height, width, slices, stacks, Transforms.Translate(0, 1 - sepparation*i, -1.2f)));
+                //balconyWindows.Add(CreateBalconyWindow(height, width, slices, stacks, Transforms.Translate(0, 1 - sepparation*i, -1.2f)));
             }
             Mesh<V> windows = Utils<V>.MorphMeshes(balconyWindows, Topology.Triangles);
             windows = windows.Weld();

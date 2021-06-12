@@ -189,7 +189,7 @@ namespace Renderer
             int slices = 15, stacks = 15;
             (Mesh<PositionNormalCoordinate> waterBottle, Mesh<PositionNormalCoordinate> waterLid, Mesh<PositionNormalCoordinate> labelOut, Mesh<PositionNormalCoordinate> labelIn) = SceneLogic.MeshObjects<PositionNormalCoordinate>.GetWaterBottle(slices, stacks);
             float4x4 waterBottlePosition = Transforms.Identity;
-            SceneLogic.TextureObjects.TextureCrystalBottle(waterBottle, waterBottlePosition, scene);
+            SceneLogic.TextureObjects.TextureCrystalBottle(waterBottle, waterBottlePosition, scene, specularMult:SpecularMult);
             SceneLogic.TextureObjects.TextureBottleLid(waterLid, waterBottlePosition, scene);
             SceneLogic.TextureObjects.TextureBottleLabel(labelOut, waterBottlePosition, scene);
             SceneLogic.TextureObjects.TextureBottleLabel(labelIn, waterBottlePosition, scene);
@@ -197,7 +197,7 @@ namespace Renderer
             (Mesh<PositionNormalCoordinate> milkBottle, Mesh<PositionNormalCoordinate> milkLid, Mesh<PositionNormalCoordinate> milk) = SceneLogic.MeshObjects<PositionNormalCoordinate>.GetMilkBottle(slices, stacks);
             float4x4 milkBottlePosition = Transforms.Translate(-0.7f, 0, -0.625f);
             // milkBottlePosition = Transforms.Identity;
-            SceneLogic.TextureObjects.TextureCrystalBottle(milkBottle, milkBottlePosition, scene);
+            SceneLogic.TextureObjects.TextureCrystalBottle(milkBottle, milkBottlePosition, scene, refractionIndex:1.1f);
             SceneLogic.TextureObjects.TextureBottleLid(milkLid, milkBottlePosition, scene);
             SceneLogic.TextureObjects.TextureMilk(milk, milkBottlePosition, scene);
 
@@ -208,7 +208,7 @@ namespace Renderer
 
             Mesh<PositionNormalCoordinate> windows = SceneLogic.MeshObjects<PositionNormalCoordinate>.GetBalconyWindow(slices, stacks);
             windows = windows.Transform(Transforms.Scale(4, 4, 4));
-            SceneLogic.TextureObjects.TextureBalconyWindows(windows, float3(5.1f, -1f, -2.3f), LightIntensity, scene);
+            SceneLogic.TextureObjects.TextureBalconyWindows(windows, LightPosition, LightIntensity, scene);
 
             SceneLogic.TextureObjects.TextureWoodBoxScene(LightPosition, LightIntensity, scene);
         }
@@ -248,18 +248,21 @@ namespace Renderer
         static float3 Target;
         static float3 LightPosition;
         static float3 LightIntensity;
-        static int bounces;
-        static int res;
+        static int Bounces;
+        static int Res;
+        static float SpecularMult;
 
         public static void SetParameters(bool raytracing)
         {
             CameraPosition = float3(5f, 0.5f, 0);
             Target = float3(0, 0.5f, 0);
-            res = 64;
+            Res = 256;
 
-            bounces = !raytracing ? 9: 4;
-            LightPosition = !raytracing ? float3(5.1f, -1f, -2.3f): float3(5.1f, 1f, 0f);
-            LightIntensity = !raytracing ? float3(1, 1, 1) * 150 :  float3(1, 1, 1) * 650;
+            Bounces = !raytracing ? 9: 4;
+            SpecularMult = !raytracing ? 4: 1;
+            LightPosition = !raytracing ? float3(5.1f, -1f, 2f): float3(5.1f, 1f, 0f);
+            LightIntensity = !raytracing ? float3(1, 1, 1) * 50 :  float3(1, 1, 1) * 450;
+
 
             //Debug
             // CameraPosition = float3(-1, 0, 0);
@@ -363,7 +366,7 @@ namespace Renderer
                     RayDescription ray = RayDescription.FromScreen(px + 0.5f, py + 0.5f, texture.Width, texture.Height, inverse(viewMatrix), inverse(projectionMatrix), 0, 1000);
 
                     RTRayPayload coloring = new RTRayPayload();
-                    coloring.Bounces = bounces;
+                    coloring.Bounces = Bounces;
 
                     raycaster.Trace(scene, ray, ref coloring);
 
@@ -439,7 +442,7 @@ namespace Renderer
                     float4 accum = texture.Read(px, py) * pass;
                     PTRayPayload coloring = new PTRayPayload();
                     coloring.Importance = float3(1, 1, 1);
-                    coloring.Bounces = bounces;
+                    coloring.Bounces = Bounces;
 
                     raycaster.Trace(scene, ray, ref coloring);
 
@@ -454,7 +457,7 @@ namespace Renderer
             SetParameters(raytracing);
 
 
-            Texture2D texture = new Texture2D(res, res);
+            Texture2D texture = new Texture2D(Res, Res);
             if (raytracing)
             {
                 Stopwatch stopwatch = new Stopwatch();

@@ -10,16 +10,18 @@ namespace SceneLogic
         public static void TextureCrystalBottle(
             Mesh<PositionNormalCoordinate> bottle,
             float4x4 transform,
-            Scene<PositionNormalCoordinate, Material> scene)
+            Scene<PositionNormalCoordinate, Material> scene,
+            float specularMult = 1,
+            float refractionIndex =  1.2f)
         {
             scene.Add(bottle.AsRaycast(RaycastingMeshMode.Grid), 
             new Material {
-                Specular = float3(1, 1, 1),
+                Specular = float3(1, 1, 1) * specularMult,
                 SpecularPower = 260,
 
                 WeightDiffuse = 0f,
                 WeightFresnel = 0.1f,
-                RefractionIndex = 1.2f//1.6f,
+                RefractionIndex = refractionIndex//1.2f//1.6f,
             }, transform);
         }
 
