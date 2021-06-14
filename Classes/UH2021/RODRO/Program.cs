@@ -189,7 +189,7 @@ namespace Renderer
             int slices = 15, stacks = 15;
             (Mesh<PositionNormalCoordinate> waterBottle, Mesh<PositionNormalCoordinate> waterLid, Mesh<PositionNormalCoordinate> labelOut, Mesh<PositionNormalCoordinate> labelIn) = SceneLogic.MeshObjects<PositionNormalCoordinate>.GetWaterBottle(slices, stacks);
             float4x4 waterBottlePosition = Transforms.Identity;
-            SceneLogic.TextureObjects.TextureCrystalBottle(waterBottle, waterBottlePosition, scene, specularMult:SpecularMult);
+            SceneLogic.TextureObjects.TextureCrystalBottle(waterBottle, waterBottlePosition, scene, specularMult:SpecularMult, refractionIndex: 1.25f);
             SceneLogic.TextureObjects.TextureBottleLid(waterLid, waterBottlePosition, scene);
             SceneLogic.TextureObjects.TextureBottleLabel(labelOut, waterBottlePosition, scene);
             SceneLogic.TextureObjects.TextureBottleLabel(labelIn, waterBottlePosition, scene);
@@ -208,7 +208,7 @@ namespace Renderer
 
             Mesh<PositionNormalCoordinate> windows = SceneLogic.MeshObjects<PositionNormalCoordinate>.GetBalconyWindow(slices, stacks);
             windows = windows.Transform(Transforms.Scale(4, 4, 4));
-            SceneLogic.TextureObjects.TextureBalconyWindows(windows, LightPosition, LightIntensity, scene);
+            SceneLogic.TextureObjects.TextureBalconyWindows(windows, float3(5.1f, -1f, 2f), LightIntensity, scene);
 
             SceneLogic.TextureObjects.TextureWoodBoxScene(LightPosition, LightIntensity, scene);
         }
@@ -256,10 +256,10 @@ namespace Renderer
         {
             CameraPosition = float3(5f, 0.5f, 0);
             Target = float3(0, 0.5f, 0);
-            Res = 256;
+            Res = 512;
 
             Bounces = !raytracing ? 9: 4;
-            SpecularMult = !raytracing ? 4: 1;
+            SpecularMult = !raytracing ? 1/*4*/: 1;
             LightPosition = !raytracing ? float3(5.1f, -1f, 2f): float3(5.1f, 1f, 0f);
             LightIntensity = !raytracing ? float3(1, 1, 1) * 50 :  float3(1, 1, 1) * 450;
 
@@ -453,7 +453,7 @@ namespace Renderer
         public static void Main()
         {
             // Texture to output the image.
-            bool raytracing = false;
+            bool raytracing = true;
             SetParameters(raytracing);
 
 
